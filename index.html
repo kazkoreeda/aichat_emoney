@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Chat with Payment</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <h1>AI Chat</h1>
+    <div>
+        <label for="message">Message:</label>
+        <input type="text" id="message" />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <p id="reply"></p>
+    <h2>Make a Payment</h2>
+    <button id="checkout-button">Pay $5</button>
+
+    <script>
+        const stripe = Stripe("{{ public_key }}");
+
+        async function sendMessage() {
+            const message = document.getElementById("message").value;
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            });
+            const data = await response.json();
+            document.getElementById("reply").innerText = data.reply || data.error;
+        }
+
+        document.getElementById("checkout-button").addEventListener("click", async () => {
+            const response = await fetch("/create-checkout-session", { method: "POST" });
+            const session = await response.json();
+            if (session.id) {
+                stripe.redirectToCheckout({ sessionId: session.id });
+            } else {
+                alert("Error creating checkout session.");
+            }
+        });
+    </script>
+</body>
+</html>
